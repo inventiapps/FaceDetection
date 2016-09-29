@@ -14,7 +14,7 @@ enum INVVideoControllerErrors: Error {
     case undefinedError
 }
 
-protocol INVRecordingViewController {
+protocol INVRecordingViewControllerProtocol {
     func startRecording()
     func stopRecording()
     func startCaptureSesion()
@@ -88,6 +88,11 @@ class INVVideoViewController: UIViewController {
         }
     }
     
+    func initialSessionOperations() {
+        self.startCaptureSesion()
+        self.startMetaSession()
+    }
+    
     // Sets Up Capturing Devices And Starts Capturing Session
     func runDeviceCapture(startSession:Bool) {
         do {
@@ -101,8 +106,7 @@ class INVVideoViewController: UIViewController {
                 try self.setupCaptureSession()
                 DispatchQueue.main.async {
                     if startSession {
-                        self.startCaptureSesion()
-                        self.startMetaSession()
+                        self.initialSessionOperations()
                     }
                 }
             } catch INVVideoControllerErrors.unsupportedDevice {
@@ -150,7 +154,7 @@ class INVVideoViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        self.setupDeviceCapture()
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -163,7 +167,7 @@ class INVVideoViewController: UIViewController {
                 print("Error while Deleting recorded File")
             }
         }
-        
+        self.setupDeviceCapture()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -205,7 +209,7 @@ class INVVideoViewController: UIViewController {
 
 
 
-extension INVVideoViewController:INVRecordingViewController {
+extension INVVideoViewController:INVRecordingViewControllerProtocol {
     
     func startRecording() {
         self.setupMoviewFileOutput()
