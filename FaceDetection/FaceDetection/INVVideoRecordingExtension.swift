@@ -10,19 +10,24 @@ import AVFoundation
 import AVKit
 
 extension INVVideoViewController: AVCaptureFileOutputRecordingDelegate {
+    
+    func playVideo() {
+        if let outuputFile = self.outputFilePath {
+            print("Output \(outuputFile)")
+            let videoController = AVPlayerViewController()
+            videoController.player = AVPlayer(url: outuputFile)
+            self.present(videoController, animated: true) {
+                videoController.player?.play()
+            }
+        }
+    }
+    
     func capture(_ captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAt outputFileURL: URL!, fromConnections connections: [Any]!, error: Error!) {
         if error != nil {
             print("Error occured during recording \(error.localizedDescription)")
             self.showCaptureError()
         } else {
-            if let outuputFile = self.outputFilePath {
-                print("Output \(outuputFile)")
-                let videoController = AVPlayerViewController()
-                videoController.player = AVPlayer(url: outuputFile)
-                self.present(videoController, animated: true) {
-                    videoController.player?.play()
-                }
-            }
+            self.playVideo()
             print("Finished Recording")
         }
     }
