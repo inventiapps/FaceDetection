@@ -24,23 +24,26 @@ class INVWriter {
     let filePath:URL
     weak var delegate:UIViewController?
     
-    init(outFilePath:URL, outputSettings:[String : Any], width:Float, height:Float, sampleBuffer:CMSampleBuffer) {
+    init(outFilePath:URL, outputSettings:[String : Any], width:Float, height:Float, pixelBuffer:CVPixelBuffer) {
         do {
             filePath = outFilePath
             assetWriter = try AVAssetWriter(url: outFilePath as URL, fileType: AVFileTypeQuickTimeMovie)
             
+            let format = CVPixelBufferGetPixelFormatType(pixelBuffer)
+            
             guard assetWriter.canApply(outputSettings: outputSettings, forMediaType: AVMediaTypeVideo) else {
                 fatalError("Negative : Can't apply the Output settings...")
             }
-            let options = [kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value: kCVPixelFormatType_64ARGB),kCVPixelBufferWidthKey as String: NSNumber(value: Float(width)), kCVPixelBufferHeightKey as String: NSNumber(value: Float(height))]
-            videoInput = AVAssetWriterInput(mediaType: AVMediaTypeVideo, outputSettings: nil)
+    
+            let options = [kCVPixelBufferPixelFormatTypeKey as String:  NSNumber(value:format),kCVPixelBufferWidthKey as String: NSNumber(value: outputSettings[AVVideoWidthKey] as! Float), kCVPixelBufferHeightKey as String: NSNumber(value: outputSettings[AVVideoHeightKey] as! Float)]
+            videoInput = AVAssetWriterInput(mediaType: AVMediaTypeVideo, outputSettings: outputSettings)
             videoInput.expectsMediaDataInRealTime = true
             videoinputAdapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoInput, sourcePixelBufferAttributes: options)
             
             if (assetWriter.canAdd(videoInput)) {
                 assetWriter.add(videoInput)
             }
-
+            
             audioInput = AVAssetWriterInput(mediaType: AVMediaTypeAudio, outputSettings: nil)
             audioInput.expectsMediaDataInRealTime = true
             

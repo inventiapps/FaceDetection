@@ -22,18 +22,20 @@ extension INVVideoViewController:AVCaptureVideoDataOutputSampleBufferDelegate,AV
         }
         cameraQueue.sync {
             if self.isRecording {
-                if self.writer == nil {
-                    self.writer = INVWriter(outFilePath: self.outputFilePath!, outputSettings: self.captureOutput?.recommendedVideoSettingsForAssetWriter(withOutputFileType: AVFileTypeQuickTimeMovie) as! [String : Any], width: Float(self.view.bounds.width), height: Float(self.view.bounds.height), sampleBuffer: sampleBuffer)
+                if self.writer == nil, let pixelBuffler = CMSampleBufferGetImageBuffer(sampleBuffer) {
+                    self.writer = INVWriter(outFilePath: self.outputFilePath!, outputSettings: self.captureOutput?.recommendedVideoSettingsForAssetWriter(withOutputFileType: AVFileTypeQuickTimeMovie) as! [String : Any], width: Float(self.view.bounds.width), height: Float(self.view.bounds.height), pixelBuffer: pixelBuffler)
                     let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
                     self.writer?.start(startTime: time)
                 }
-                if captureOutput is AVCaptureVideoDataOutput {
-                    outputQueue.async {
-                        self.writer?.write(sampleBuffer: sampleBuffer, isVideo: true)
-                    }
-                } else {
-                    audioOutputQueue.async {
-                        self.writer?.write(sampleBuffer: sampleBuffer, isVideo: false)
+                if self.writer != nil {
+                    if captureOutput is AVCaptureVideoDataOutput {
+                        outputQueue.async {
+                            self.writer?.write(sampleBuffer: sampleBuffer, isVideo: true)
+                        }
+                    } else {
+                        audioOutputQueue.async {
+                            self.writer?.write(sampleBuffer: sampleBuffer, isVideo: false)
+                        }
                     }
                 }
             }
