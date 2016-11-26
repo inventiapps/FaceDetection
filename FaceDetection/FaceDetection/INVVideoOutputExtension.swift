@@ -13,17 +13,27 @@ import CoreFoundation
 
 
 
-extension INVVideoViewController:AVCaptureVideoDataOutputSampleBufferDelegate,AVCaptureAudioDataOutputSampleBufferDelegate {
-    
-    func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
-        if (!CMSampleBufferDataIsReady(sampleBuffer)) {
+extension INVVideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate,
+    AVCaptureAudioDataOutputSampleBufferDelegate {
+
+    func captureOutput(_ captureOutput: AVCaptureOutput!,
+        didOutputSampleBuffer sampleBuffer: CMSampleBuffer!,
+        from connection: AVCaptureConnection!) {
+        if !CMSampleBufferDataIsReady(sampleBuffer) {
             print("sample buffer is not ready. Skipping sample")
             return
         }
         cameraQueue.sync {
             if self.isRecording {
-                if self.writer == nil, let pixelBuffler = CMSampleBufferGetImageBuffer(sampleBuffer) {
-                    self.writer = INVWriter(outFilePath: self.outputFilePath!, outputSettings: self.captureOutput?.recommendedVideoSettingsForAssetWriter(withOutputFileType: AVFileTypeQuickTimeMovie) as! [String : Any], width: Float(self.view.bounds.width), height: Float(self.view.bounds.height), pixelBuffer: pixelBuffler)
+                if self.writer == nil,
+                    let pixelBuffler = CMSampleBufferGetImageBuffer(sampleBuffer),
+                    let outputSettings = self.captureOutput?.recommendedVideoSettingsForAssetWriter(
+                        withOutputFileType: AVFileTypeQuickTimeMovie) as? [String : Any] {
+                    self.writer = INVWriter(
+                        outFilePath: self.outputFilePath!,
+                        outputSettings: outputSettings,
+                        width: Float(self.view.bounds.width),
+                        height: Float(self.view.bounds.height), pixelBuffer: pixelBuffler)
                     let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
                     self.writer?.start(startTime: time)
                 }
@@ -41,8 +51,9 @@ extension INVVideoViewController:AVCaptureVideoDataOutputSampleBufferDelegate,AV
             }
         }
     }
-    func captureOutput(_ captureOutput: AVCaptureOutput!, didDrop sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
-        
+
+    func captureOutput(_ captureOutput: AVCaptureOutput!,
+                       didDrop sampleBuffer: CMSampleBuffer!,
+                       from connection: AVCaptureConnection!) {
     }
-    
 }
