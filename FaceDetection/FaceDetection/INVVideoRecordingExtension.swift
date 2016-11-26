@@ -10,7 +10,7 @@ import AVFoundation
 import AVKit
 
 extension INVVideoViewController: AVCaptureFileOutputRecordingDelegate {
-    
+
     func playVideo() {
         if let outuputFile = self.outputFilePath {
             print("Output \(outuputFile)")
@@ -21,8 +21,10 @@ extension INVVideoViewController: AVCaptureFileOutputRecordingDelegate {
             }
         }
     }
-    
-    func capture(_ captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAt outputFileURL: URL!, fromConnections connections: [Any]!, error: Error!) {
+
+    func capture(_ captureOutput: AVCaptureFileOutput!,
+                 didFinishRecordingToOutputFileAt outputFileURL: URL!,
+                 fromConnections connections: [Any]!, error: Error!) {
         if error != nil {
             print("Error occured during recording \(error.localizedDescription)")
             self.showCaptureError()
@@ -31,28 +33,34 @@ extension INVVideoViewController: AVCaptureFileOutputRecordingDelegate {
             print("Finished Recording")
         }
     }
-    
+
     func setupMoviewFileOutput() {
         if self.movieFileOutputCapture != nil {
         } else {
             self.movieFileOutputCapture = AVCaptureMovieFileOutput()
             if self.captureSession.canAddOutput(self.movieFileOutputCapture) {
                 self.captureSession.addOutput(self.movieFileOutputCapture)
-                let connection = self.movieFileOutputCapture?.connection(withMediaType: AVMediaTypeVideo)
+                let connection = self.movieFileOutputCapture?.connection(
+                    withMediaType: AVMediaTypeVideo)
                 connection?.isVideoMirrored = true
             } else {
                 fatalError("Cannot Add Movie File Output")
             }
         }
     }
-    
+
     func showCaptureError() {
-        let alert = UIAlertController(title:"Error", message: "Something Went Wrong While Recording", preferredStyle: .alert)
-        let alertOkAction = UIAlertAction(title: "Cancel Recording", style: .cancel, handler: { (action) in
+        let alert = UIAlertController(title:"Error",
+                                      message: "Something Went Wrong While Recording",
+                                      preferredStyle: .alert)
+        let alertOkAction = UIAlertAction(title: "Cancel Recording",
+                                          style: .cancel,
+                                          handler: { (action) in
             self.stopCaptureSession()
             self.stopRecording()
         })
-        let alertRestartAction = UIAlertAction(title: "Restart Recording", style: .cancel, handler: { (action) in
+        let alertRestartAction = UIAlertAction(title: "Restart Recording",
+                                               style: .cancel, handler: { (action) in
             self.sessionQueue.async {
                 self.captureSession.startRunning()
                 if self.isRecording {

@@ -18,106 +18,120 @@ let overlayImage = CIImage(image:UIImage(named:"overlay")!)
 
 class INVWriter {
     var videoInput: AVAssetWriterInput
-    var videoinputAdapter:AVAssetWriterInputPixelBufferAdaptor
+    var videoinputAdapter: AVAssetWriterInputPixelBufferAdaptor
     var audioInput: AVAssetWriterInput
-    var assetWriter:AVAssetWriter
-    let filePath:URL
-    weak var delegate:UIViewController?
-    
-    init(outFilePath:URL, outputSettings:[String : Any], width:Float, height:Float, pixelBuffer:CVPixelBuffer) {
+    var assetWriter: AVAssetWriter
+    let filePath: URL
+    weak var delegate: UIViewController?
+
+    init(outFilePath: URL, outputSettings: [String : Any],
+         width: Float,
+         height: Float,
+         pixelBuffer: CVPixelBuffer) {
         do {
             filePath = outFilePath
-            assetWriter = try AVAssetWriter(url: outFilePath as URL, fileType: AVFileTypeQuickTimeMovie)
-            
+            assetWriter = try AVAssetWriter(url: outFilePath as URL,
+                                            fileType: AVFileTypeQuickTimeMovie)
             let format = CVPixelBufferGetPixelFormatType(pixelBuffer)
-            
-            guard assetWriter.canApply(outputSettings: outputSettings, forMediaType: AVMediaTypeVideo) else {
+            guard assetWriter.canApply(outputSettings: outputSettings,
+                forMediaType: AVMediaTypeVideo) else {
                 fatalError("Negative : Can't apply the Output settings...")
             }
-    
-            let options = [kCVPixelBufferPixelFormatTypeKey as String:  NSNumber(value:format),kCVPixelBufferWidthKey as String: NSNumber(value: outputSettings[AVVideoWidthKey] as! Float), kCVPixelBufferHeightKey as String: NSNumber(value: outputSettings[AVVideoHeightKey] as! Float)]
-            videoInput = AVAssetWriterInput(mediaType: AVMediaTypeVideo, outputSettings: outputSettings)
-            videoInput.expectsMediaDataInRealTime = true
-            videoinputAdapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoInput, sourcePixelBufferAttributes: options)
-            
-            if (assetWriter.canAdd(videoInput)) {
-                assetWriter.add(videoInput)
-            }
-            
-            audioInput = AVAssetWriterInput(mediaType: AVMediaTypeAudio, outputSettings: nil)
-            audioInput.expectsMediaDataInRealTime = true
-            
-            
-            if (assetWriter.canAdd(audioInput)) {
-                assetWriter.add(audioInput)
+            if let videoHeight = outputSettings[AVVideoHeightKey] as? Float,
+                let videoWidth = outputSettings[AVVideoWidthKey] as? Float {
+                let options = [kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value:format),
+                    kCVPixelBufferWidthKey as String: NSNumber(value: videoWidth),
+                    kCVPixelBufferHeightKey as String: NSNumber(value: videoHeight)
+                ]
+                videoInput = AVAssetWriterInput(mediaType: AVMediaTypeVideo,
+                    outputSettings: outputSettings)
+                videoInput.expectsMediaDataInRealTime = true
+                videoinputAdapter = AVAssetWriterInputPixelBufferAdaptor(
+                    assetWriterInput: videoInput,
+                    sourcePixelBufferAttributes: options)
+                if assetWriter.canAdd(videoInput) {
+                    assetWriter.add(videoInput)
+                }
+                audioInput = AVAssetWriterInput(mediaType: AVMediaTypeAudio, outputSettings: nil)
+                audioInput.expectsMediaDataInRealTime = true
+                if assetWriter.canAdd(audioInput) {
+                    assetWriter.add(audioInput)
+                }
+            } else {
+                videoInput = AVAssetWriterInput(mediaType: AVMediaTypeVideo,
+                                                outputSettings: outputSettings)
+                videoInput.expectsMediaDataInRealTime = true
+                videoinputAdapter = AVAssetWriterInputPixelBufferAdaptor(
+                    assetWriterInput: videoInput,
+                    sourcePixelBufferAttributes: nil)
+                if assetWriter.canAdd(videoInput) {
+                    assetWriter.add(videoInput)
+                }
+                audioInput = AVAssetWriterInput(mediaType: AVMediaTypeAudio, outputSettings: nil)
+                audioInput.expectsMediaDataInRealTime = true
             }
         } catch {
             fatalError("Failed Creating Writer")
         }
     }
-    
-    
-    
-    func start(startTime:CMTime) {
+
+    func start(startTime: CMTime) {
         self.assetWriter.startWriting()
         self.assetWriter.startSession(atSourceTime: startTime)
     }
-    
+
     func stop() {
         self.videoInput.markAsFinished()
         self.assetWriter.finishWriting {
-            if (self.assetWriter.error != nil) {
+            if self.assetWriter.error != nil {
                 print("Error converting images to video: \(self.assetWriter.error)")
             } else {
                 print("Finished Writing")
-                
                 self.playVideo()
             }
         }
     }
-    
-    func writeVideo(sampleBuffer:CMSampleBuffer) {
+
+    func writeVideo(sampleBuffer: CMSampleBuffer) {
         if  let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
-            
             let beginImage = CIImage(cvPixelBuffer: pixelBuffer)
             filter?.setValue(overlayImage, forKey: kCIInputImageKey)
             filter?.setValue(beginImage, forKey: kCIInputBackgroundImageKey)
             let output = filter!.outputImage
             let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-            var outputBuffer:CVPixelBuffer?
-            
+            var outputBuffer: CVPixelBuffer?
             let format = CVPixelBufferGetPixelFormatType(pixelBuffer)
             let status = CVPixelBufferCreate(kCFAllocatorDefault,
                                              Int(output!.extent.size.width),
                                              Int(output!.extent.size.height),
                                              format,
                                              nil,
-                                             &outputBuffer);
-            
-            if (status == kCVReturnSuccess) {
-                coreImageContext.render(output!, to: outputBuffer!, bounds: beginImage.extent, colorSpace: CGColorSpaceCreateDeviceRGB())
+                                             &outputBuffer)
+            if status == kCVReturnSuccess {
+                coreImageContext.render(output!,
+                    to: outputBuffer!,
+                    bounds: beginImage.extent,
+                    colorSpace: CGColorSpaceCreateDeviceRGB())
                 self.videoinputAdapter.append(outputBuffer!, withPresentationTime: time)
             } else {
                 print("Failed to render Frame")
-                return ;
+                return
             }
-            
         }
     }
-    
-    func write(sampleBuffer:CMSampleBuffer,isVideo: Bool) {
+
+    func write(sampleBuffer: CMSampleBuffer, isVideo: Bool) {
         if isVideo == false {
             if self.audioInput.isReadyForMoreMediaData {
                 self.audioInput.append(sampleBuffer)
             }
         } else {
-            
             if self.videoInput.isReadyForMoreMediaData {
                 self.writeVideo(sampleBuffer: sampleBuffer)
             }
         }
     }
-    
+
     func playVideo() {
         if self.assetWriter.status == .completed {
             DispatchQueue.main.async {
