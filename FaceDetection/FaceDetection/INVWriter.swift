@@ -11,12 +11,11 @@ import AVFoundation
 import AssetsLibrary
 import AVKit
 
-let eaglContext = EAGLContext(api: EAGLRenderingAPI.openGLES2)
-let coreImageContext = CIContext(eaglContext: eaglContext!, options: nil)
-let filter = CIFilter(name: "CISourceOverCompositing")
-let overlayImage = CIImage(image:UIImage(named:"overlay")!)
-
 class INVWriter {
+    private let eaglContext = EAGLContext(api: EAGLRenderingAPI.openGLES2)
+    private let coreImageContext: CIContext
+    private let filter = CIFilter(name: "CISourceOverCompositing")
+    private let overlayImage = CIImage(image:UIImage(named:"overlay")!)
     var videoInput: AVAssetWriterInput
     var videoinputAdapter: AVAssetWriterInputPixelBufferAdaptor
     var audioInput: AVAssetWriterInput
@@ -28,6 +27,7 @@ class INVWriter {
          width: Float,
          height: Float,
          pixelBuffer: CVPixelBuffer) {
+        self.coreImageContext = CIContext(eaglContext: self.eaglContext!, options: nil)
         do {
             filePath = outFilePath
             assetWriter = try AVAssetWriter(url: outFilePath as URL,

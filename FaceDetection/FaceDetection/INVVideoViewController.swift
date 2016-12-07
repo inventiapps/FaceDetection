@@ -8,6 +8,10 @@
 
 import UIKit
 import AVFoundation
+import AVKit
+import CoreImage
+import ImageIO
+import CoreFoundation
 
 enum INVVideoControllerErrors: Error {
     case unsupportedDevice
@@ -23,34 +27,56 @@ protocol INVRecordingViewControllerProtocol {
 }
 
 class INVVideoViewController: UIViewController {
-    let sessionQueue = DispatchQueue(label: "session queue",
-                                     qos: .userInteractive,
-                                     target: nil)
+
+    var audioOutput: AVCaptureAudioDataOutput?
+    var captureOutput: AVCaptureVideoDataOutput?
+    var previewLayer: AVCaptureVideoPreviewLayer?
+    var writer: INVWriter?
+    var outputFilePath: URL?
+    var isRecording: Bool = false
+    var recordingActivated: Bool = false
     let outputQueue = DispatchQueue(label: "session output queue",
                                     qos: .userInteractive, target: nil)
+    let cameraQueue = DispatchQueue(label: "camera queue")
     let audioOutputQueue = DispatchQueue(label: "audiosession output queue",
                                          qos: .userInteractive, target: nil)
-    let cameraQueue = DispatchQueue(label: "camera queue")
-    let captureSession = AVCaptureSession()
-    var previewLayer: AVCaptureVideoPreviewLayer?
-    var numberOfAuthorizedDevices = 0
-    var runtimeCaptureErrorObserver: NSObjectProtocol?
-    var movieFileOutputCapture: AVCaptureMovieFileOutput?
-    var isRecording: Bool = false
-    var outputFilePath: URL?
-    let kINVRecordedFileName = "movie.mov"
-    var writer: INVWriter?
-    var isAssetWriter: Bool = false
-    var captureOutput: AVCaptureVideoDataOutput?
-    var audioOutput: AVCaptureAudioDataOutput?
-    @IBOutlet weak var recordButton: UIButton!
 
-    func checkDeviceAuthorizationStatus(handler: @escaping ((_ granted: Bool) -> Void)) {
+    fileprivate let sessionQueue = DispatchQueue(label: "session queue",
+                                     qos: .userInteractive,
+                                     target: nil)
+    fileprivate let captureSession = AVCaptureSession()
+    private var numberOfAuthorizedDevices = 0
+    fileprivate var runtimeCaptureErrorObserver: NSObjectProtocol?
+    fileprivate var movieFileOutputCapture: AVCaptureMovieFileOutput?
+    fileprivate let kINVRecordedFileName = "movie.mov"
+    private var isAssetWriter: Bool = false
+    @IBOutlet weak private var recordButton: UIButton!
+
+    static func checkDeviceAuthorizationStatus(handler: @escaping ((_ granted: Bool) -> Void)) {
         AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeVideo, completionHandler: handler)
         AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeAudio, completionHandler: handler)
     }
 
-    func setupPreviewView(session: AVCaptureSession) throws {
+    static func deviceWithMediaType(mediaType: String,
+                             position: AVCaptureDevicePosition?) throws -> AVCaptureDevice? {
+        if let devices = AVCaptureDevice.devices(withMediaType: mediaType),
+            let devicePosition = position {
+            for deviceObj in devices {
+                if let device = deviceObj as? AVCaptureDevice,
+                    device.position == devicePosition {
+                    return device
+                }
+            }
+        } else {
+            if let devices = AVCaptureDevice.devices(withMediaType: mediaType),
+                let device = devices.first as? AVCaptureDevice {
+                return device
+            }
+        }
+        throw INVVideoControllerErrors.unsupportedDevice
+    }
+
+    private func setupPreviewView(session: AVCaptureSession) throws {
         if let previewLayer = AVCaptureVideoPreviewLayer(session: session) {
             previewLayer.masksToBounds = true
             previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
@@ -63,36 +89,19 @@ class INVVideoViewController: UIViewController {
         }
     }
 
-    func deviceWithMediaType(mediaType: String,
-                              position: AVCaptureDevicePosition?) throws -> AVCaptureDevice? {
-        if let devices = AVCaptureDevice.devices(withMediaType: mediaType),
-            let devicePosition = position {
-                for deviceObj in devices {
-                    if let device = deviceObj as? AVCaptureDevice,
-                        device.position == devicePosition {
-                        return device
-                    }
-                }
-        } else {
-            if let devices = AVCaptureDevice.devices(withMediaType: mediaType),
-                let device = devices.first as? AVCaptureDevice {
-                return device
-            }
-        }
-
-        throw INVVideoControllerErrors.unsupportedDevice
-    }
-
-    func setupCaptureSession() throws {
-        let videoDevice = try self.deviceWithMediaType(mediaType: AVMediaTypeVideo,
-                                                       position: AVCaptureDevicePosition.front)
+    private func setupCaptureSession() throws {
+        let videoDevice = try INVVideoViewController.deviceWithMediaType(
+            mediaType: AVMediaTypeVideo,
+            position: AVCaptureDevicePosition.front)
         let captureDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
         if self.captureSession.canAddInput(captureDeviceInput) {
             self.captureSession.addInput(captureDeviceInput)
         } else {
             fatalError("Cannot add video recording input")
         }
-        let audioDevice = try self.deviceWithMediaType(mediaType: AVMediaTypeAudio, position: nil)
+        let audioDevice = try INVVideoViewController.deviceWithMediaType(
+            mediaType: AVMediaTypeAudio,
+            position: nil)
         let audioDeviceInput = try AVCaptureDeviceInput(device: audioDevice)
         if self.captureSession.canAddInput(audioDeviceInput) {
             self.captureSession.addInput(audioDeviceInput)
@@ -101,7 +110,11 @@ class INVVideoViewController: UIViewController {
         }
     }
 
-    func initialSessionOperations() {
+    fileprivate func startOutputSession() {
+        self.setupAssetWritter()
+    }
+
+    fileprivate func initialSessionOperations() {
         self.startOutputSession()
         self.startCaptureSesion()
         self.startMetaSession()
@@ -128,7 +141,7 @@ class INVVideoViewController: UIViewController {
         }
     }
 
-    func handleVideoRotation() {
+    fileprivate func handleVideoRotation() {
         if let connection =  self.previewLayer?.connection {
             let currentDevice: UIDevice = UIDevice.current
             let orientation: UIDeviceOrientation = currentDevice.orientation
@@ -153,7 +166,7 @@ class INVVideoViewController: UIViewController {
         if self.numberOfAuthorizedDevices == 2 { // Audio and Video Devices were already set up
             self.startCaptureSesion()
         } else {
-            self.checkDeviceAuthorizationStatus { (granted) in
+            INVVideoViewController.checkDeviceAuthorizationStatus { (granted) in
                 if granted {
                     self.numberOfAuthorizedDevices += 1
                     if self.numberOfAuthorizedDevices >= 2 {
@@ -204,7 +217,7 @@ class INVVideoViewController: UIViewController {
         return true
     }
 
-    func removeVideoFile() {
+    fileprivate func removeVideoFile() {
         if let outputFilePath = self.outputFilePath {
             do {
                 try FileManager.default.removeItem(at: outputFilePath)
@@ -215,7 +228,7 @@ class INVVideoViewController: UIViewController {
         }
     }
 
-    func updateButtonTitle() {
+    fileprivate func updateButtonTitle() {
         if self.isRecording {
             self.recordButton.setTitle("Stop Recording", for: .normal)
         } else {
@@ -232,8 +245,6 @@ class INVVideoViewController: UIViewController {
         self.updateButtonTitle()
     }
 }
-
-
 
 extension INVVideoViewController:INVRecordingViewControllerProtocol {
 
@@ -257,22 +268,24 @@ extension INVVideoViewController:INVRecordingViewControllerProtocol {
     func startRecording() {
         self.outputFilePath = URL(fileURLWithPath: NSTemporaryDirectory() + kINVRecordedFileName)
         self.removeVideoFile()
+        self.isRecording = true
         cameraQueue.sync {
-            self.isRecording = true
+            self.recordingActivated = true
         }
         self.updateButtonTitle()
     }
 
     func stopRecording() {
         cameraQueue.sync {
-        if self.isRecording {
-            self.writer?.delegate = self
-            self.isRecording = false
-            self.outputQueue.async {
-                self.writer?.stop()
+            if self.recordingActivated {
+                self.writer?.delegate = self
+                self.recordingActivated = false
+                self.outputQueue.async {
+                    self.writer?.stop()
+                }
             }
         }
-        }
+        self.isRecording = false
         self.updateButtonTitle()
         print("Stopped Capture Session")
     }
@@ -332,8 +345,65 @@ extension INVVideoViewController:INVRecordingViewControllerProtocol {
                 outputLayerConnection.preferredVideoStabilizationMode = .standard
             }
     }
+}
 
-    func startOutputSession() {
-        self.setupAssetWritter()
+extension INVVideoViewController: AVCaptureFileOutputRecordingDelegate {
+    func playVideo() {
+        if let outuputFile = self.outputFilePath {
+            print("Output \(outuputFile)")
+            let videoController = AVPlayerViewController()
+            videoController.player = AVPlayer(url: outuputFile)
+            self.present(videoController, animated: true) {
+                videoController.player?.play()
+            }
+        }
+    }
+    func capture(_ captureOutput: AVCaptureFileOutput!,
+                 didFinishRecordingToOutputFileAt outputFileURL: URL!,
+                 fromConnections connections: [Any]!, error: Error!) {
+        if error != nil {
+            print("Error occured during recording \(error.localizedDescription)")
+            self.showCaptureError()
+        } else {
+            self.playVideo()
+            print("Finished Recording")
+        }
+    }
+    func setupMoviewFileOutput() {
+        if self.movieFileOutputCapture != nil {
+        } else {
+            self.movieFileOutputCapture = AVCaptureMovieFileOutput()
+            if self.captureSession.canAddOutput(self.movieFileOutputCapture) {
+                self.captureSession.addOutput(self.movieFileOutputCapture)
+                let connection = self.movieFileOutputCapture?.connection(
+                    withMediaType: AVMediaTypeVideo)
+                connection?.isVideoMirrored = true
+            } else {
+                fatalError("Cannot Add Movie File Output")
+            }
+        }
+    }
+    fileprivate func showCaptureError() {
+        let alert = UIAlertController(title:"Error",
+                                      message: "Something Went Wrong While Recording",
+                                      preferredStyle: .alert)
+        let alertOkAction = UIAlertAction(title: "Cancel Recording",
+                                          style: .cancel,
+                                          handler: { (action) in
+                                            self.stopRecording()
+                                            self.stopCaptureSession()
+        })
+        let alertRestartAction = UIAlertAction(title: "Restart Recording",
+                                               style: .cancel, handler: { (action) in
+                                                self.sessionQueue.async {
+                                                    self.captureSession.startRunning()
+                                                    if self.isRecording {
+                                                        self.startRecording()
+                                                    }
+                                                }
+        })
+        alert.addAction(alertOkAction)
+        alert.addAction(alertRestartAction)
+        alert.show(self, sender: nil)
     }
 }
