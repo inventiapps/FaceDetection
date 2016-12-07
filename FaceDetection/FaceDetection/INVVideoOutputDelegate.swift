@@ -1,30 +1,28 @@
 //
-//  INVVideoOutputExtension.swift
+//  INVVideoOutputDelegate.swift
 //  FaceDetection
 //
-//  Created by Krzysztof Kryniecki on 10/13/16.
+//  Created by Krzysztof Kryniecki on 12/7/16.
 //  Copyright © 2016 InventiApps. All rights reserved.
 //
+
 import UIKit
 import AVFoundation
-import CoreImage
-import ImageIO
-import CoreFoundation
-
+import AVKit
 
 
 extension INVVideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate,
-    AVCaptureAudioDataOutputSampleBufferDelegate {
+AVCaptureAudioDataOutputSampleBufferDelegate {
 
     func captureOutput(_ captureOutput: AVCaptureOutput!,
-        didOutputSampleBuffer sampleBuffer: CMSampleBuffer!,
-        from connection: AVCaptureConnection!) {
+                       didOutputSampleBuffer sampleBuffer: CMSampleBuffer!,
+                       from connection: AVCaptureConnection!) {
         if !CMSampleBufferDataIsReady(sampleBuffer) {
             print("sample buffer is not ready. Skipping sample")
             return
         }
         cameraQueue.sync {
-            if self.isRecording {
+            if self.recordingActivated {
                 if self.writer == nil,
                     let pixelBuffler = CMSampleBufferGetImageBuffer(sampleBuffer),
                     let outputSettings = self.captureOutput?.recommendedVideoSettingsForAssetWriter(

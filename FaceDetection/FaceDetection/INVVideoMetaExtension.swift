@@ -9,12 +9,12 @@ import AVFoundation
 
 
 extension INVVideoViewController:AVCaptureMetadataOutputObjectsDelegate {
-    func printFaceLayer(faceObjects: [AVMetadataFaceObject]) {
+    func printFaceLayer(layer: CALayer, faceObjects: [AVMetadataFaceObject]) {
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
         // hide all the face layers
         var faceLayers = [CALayer]()
-        for layer: CALayer in self.previewLayer!.sublayers! {
+        for layer: CALayer in layer.sublayers! {
             if layer.name == "face" {
                 faceLayers.append(layer)
             }
@@ -28,7 +28,7 @@ extension INVVideoViewController:AVCaptureMetadataOutputObjectsDelegate {
             featureLayer.borderColor = UIColor.green.cgColor
             featureLayer.borderWidth = 1.0
             featureLayer.name = "face"
-            self.previewLayer?.addSublayer(featureLayer)
+            layer.addSublayer(featureLayer)
         }
         CATransaction.commit()
     }
@@ -38,17 +38,16 @@ extension INVVideoViewController:AVCaptureMetadataOutputObjectsDelegate {
                        from connection: AVCaptureConnection!) {
         var faceObjects = [AVMetadataFaceObject]()
         for metadataObject in metadataObjects {
-            if let metaFaceObject = metadataObject as? AVMetadataFaceObject {
-                if metaFaceObject.type == AVMetadataObjectTypeFace {
-                    if let object = self.previewLayer?.transformedMetadataObject(
-                        for: metaFaceObject) as? AVMetadataFaceObject {
-                        faceObjects.append(object)
-                    }
+            if let metaFaceObject = metadataObject as? AVMetadataFaceObject,
+                metaFaceObject.type == AVMetadataObjectTypeFace {
+                if let object = self.previewLayer?.transformedMetadataObject(
+                    for: metaFaceObject) as? AVMetadataFaceObject {
+                    faceObjects.append(object)
                 }
             }
         }
-        if faceObjects.count > 0 {
-            self.printFaceLayer(faceObjects: faceObjects)
+        if faceObjects.count > 0, let layer = self.previewLayer {
+            self.printFaceLayer(layer: layer, faceObjects: faceObjects)
         }
     }
 }
