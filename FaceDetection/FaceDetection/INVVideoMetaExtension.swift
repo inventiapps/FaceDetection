@@ -7,7 +7,6 @@
 import UIKit
 import AVFoundation
 
-
 extension INVVideoViewController:AVCaptureMetadataOutputObjectsDelegate {
     func printFaceLayer(layer: CALayer, faceObjects: [AVMetadataFaceObject]) {
         CATransaction.begin()

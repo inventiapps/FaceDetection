@@ -7,18 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		83A086E61DF82E81006DFEF9 /* INVVideoOutputDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A086E51DF82E81006DFEF9 /* INVVideoOutputDelegate.swift */; };
+		83A4029D1E576E8000022B96 /* INVVideoComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4029C1E576E8000022B96 /* INVVideoComponent.swift */; };
+		83A402A01E57753200022B96 /* INVExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4029F1E57753200022B96 /* INVExampleViewController.swift */; };
 		83DD12B31D9D6530007274AB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83DD12B21D9D6530007274AB /* AppDelegate.swift */; };
 		83DD12B81D9D6530007274AB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 83DD12B61D9D6530007274AB /* Main.storyboard */; };
 		83DD12BA1D9D6530007274AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 83DD12B91D9D6530007274AB /* Assets.xcassets */; };
 		83DD12BD1D9D6530007274AB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 83DD12BB1D9D6530007274AB /* LaunchScreen.storyboard */; };
 		83DD12C71D9D6869007274AB /* INVVideoMetaExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83DD12C41D9D6869007274AB /* INVVideoMetaExtension.swift */; };
 		83DD12C91D9D6869007274AB /* INVVideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83DD12C61D9D6869007274AB /* INVVideoViewController.swift */; };
-		83E5BFEA1DB511650091D218 /* INVWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E5BFE91DB511650091D218 /* INVWriter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		83A086E51DF82E81006DFEF9 /* INVVideoOutputDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = INVVideoOutputDelegate.swift; sourceTree = "<group>"; };
+		83A4029C1E576E8000022B96 /* INVVideoComponent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = INVVideoComponent.swift; sourceTree = "<group>"; };
+		83A4029F1E57753200022B96 /* INVExampleViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = INVExampleViewController.swift; sourceTree = "<group>"; };
 		83DD12AF1D9D6530007274AB /* FaceDetection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceDetection.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83DD12B21D9D6530007274AB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		83DD12B71D9D6530007274AB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -27,7 +28,6 @@
 		83DD12BE1D9D6530007274AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		83DD12C41D9D6869007274AB /* INVVideoMetaExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = INVVideoMetaExtension.swift; sourceTree = "<group>"; };
 		83DD12C61D9D6869007274AB /* INVVideoViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = INVVideoViewController.swift; sourceTree = "<group>"; };
-		83E5BFE91DB511650091D218 /* INVWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = INVWriter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +41,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		83A4029E1E5774F900022B96 /* Example */ = {
+			isa = PBXGroup;
+			children = (
+				83A4029F1E57753200022B96 /* INVExampleViewController.swift */,
+			);
+			name = Example;
+			sourceTree = "<group>";
+		};
 		83DD12A61D9D6530007274AB = {
 			isa = PBXGroup;
 			children = (
@@ -60,10 +68,8 @@
 		83DD12B11D9D6530007274AB /* FaceDetection */ = {
 			isa = PBXGroup;
 			children = (
-				83DD12C41D9D6869007274AB /* INVVideoMetaExtension.swift */,
-				83E5BFE91DB511650091D218 /* INVWriter.swift */,
-				83A086E51DF82E81006DFEF9 /* INVVideoOutputDelegate.swift */,
-				83DD12C61D9D6869007274AB /* INVVideoViewController.swift */,
+				83F25E391E579CD9008283AE /* INVVideoComponent */,
+				83A4029E1E5774F900022B96 /* Example */,
 				83DD12B21D9D6530007274AB /* AppDelegate.swift */,
 				83DD12B61D9D6530007274AB /* Main.storyboard */,
 				83DD12B91D9D6530007274AB /* Assets.xcassets */,
@@ -71,6 +77,16 @@
 				83DD12BE1D9D6530007274AB /* Info.plist */,
 			);
 			path = FaceDetection;
+			sourceTree = "<group>";
+		};
+		83F25E391E579CD9008283AE /* INVVideoComponent */ = {
+			isa = PBXGroup;
+			children = (
+				83A4029C1E576E8000022B96 /* INVVideoComponent.swift */,
+				83DD12C61D9D6869007274AB /* INVVideoViewController.swift */,
+				83DD12C41D9D6869007274AB /* INVVideoMetaExtension.swift */,
+			);
+			name = INVVideoComponent;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -165,9 +181,9 @@
 			files = (
 				83DD12C91D9D6869007274AB /* INVVideoViewController.swift in Sources */,
 				83DD12C71D9D6869007274AB /* INVVideoMetaExtension.swift in Sources */,
-				83E5BFEA1DB511650091D218 /* INVWriter.swift in Sources */,
+				83A4029D1E576E8000022B96 /* INVVideoComponent.swift in Sources */,
+				83A402A01E57753200022B96 /* INVExampleViewController.swift in Sources */,
 				83DD12B31D9D6530007274AB /* AppDelegate.swift in Sources */,
-				83A086E61DF82E81006DFEF9 /* INVVideoOutputDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -233,7 +249,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -277,7 +293,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";

@@ -14,11 +14,6 @@ The project illustrates how to use Face Detection iOS Api from  live camera feed
 Helper classes allows easily to use iOS video apis. You are welcome to use these code for your project.
 
 ## How To:
-In order to initialize recording devices and obtain user permissions setupDeviceCapture method must be invoked.
-The recording/preview of feed is managed trough INVRecordingViewControllerProtocol protocol methods.
-
-To redefine initial operations invoked after initialization, just after the appearance of viewController, one need to update initialSessionOperations method where it is defined.
-
 Capture session starts if and only if there are video and audio recording permissions
 
 ## License
