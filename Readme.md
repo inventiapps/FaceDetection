@@ -6,7 +6,7 @@ Realtime Face Tracking in iOS in Swift 3.0.
 
 The following  functionality is complete:
 
-* [x] Recording front camera feed.
+* [x] Live preview of front/back camera feed.
 * [x] Face detection.
 
 ## Notes
